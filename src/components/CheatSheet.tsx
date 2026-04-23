@@ -5,32 +5,30 @@ function TipCard({ tip }: { tip: typeof TIPS[number] }) {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full text-left px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        className="w-full text-left px-4 py-4 flex items-start justify-between hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-start gap-3">
-          <span className="text-2xl font-bold text-indigo-200 leading-none mt-0.5">{tip.num}</span>
+          <span className="text-2xl font-bold text-indigo-200 leading-none mt-0.5 flex-shrink-0">{tip.num}</span>
           <div>
-            <h3 className="font-semibold text-gray-800">{tip.title}</h3>
-            <p className="text-sm text-gray-500 mt-0.5">{tip.sub}</p>
+            <h3 className="font-semibold text-gray-800 text-sm leading-snug">{tip.title}</h3>
+            <p className="text-xs text-gray-500 mt-1 leading-snug">{tip.sub}</p>
           </div>
         </div>
-        <span className="text-gray-400 ml-4 flex-shrink-0 text-lg">{open ? '▲' : '▼'}</span>
+        <span className="text-gray-300 ml-2 flex-shrink-0 text-sm mt-0.5">{open ? '▲' : '▼'}</span>
       </button>
 
       {open && (
-        <div className="px-5 pb-5 border-t border-gray-100 space-y-3 pt-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-red-50 rounded-lg p-3">
-              <p className="text-xs font-semibold text-red-500 mb-1">Bad ❌</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{tip.bad}</p>
-            </div>
-            <div className="bg-green-50 rounded-lg p-3">
-              <p className="text-xs font-semibold text-green-600 mb-1">Good ✅</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{tip.good}</p>
-            </div>
+        <div className="px-4 pb-4 border-t border-gray-100 space-y-2 pt-3">
+          <div className="bg-red-50 rounded-lg p-3">
+            <p className="text-xs font-semibold text-red-500 mb-1">Bad ❌</p>
+            <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{tip.bad}</p>
+          </div>
+          <div className="bg-green-50 rounded-lg p-3">
+            <p className="text-xs font-semibold text-green-600 mb-1">Good ✅</p>
+            <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{tip.good}</p>
           </div>
         </div>
       )}
@@ -75,7 +73,7 @@ export default function CheatSheet() {
           Markdownでエクスポート
         </button>
       </div>
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
         {TIPS.map((tip) => (
           <TipCard key={tip.num} tip={tip} />
         ))}
