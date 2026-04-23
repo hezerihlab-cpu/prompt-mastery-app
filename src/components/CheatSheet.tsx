@@ -1,37 +1,44 @@
-import { useState } from 'react'
-import { TIPS } from '../data/tips'
+import { Fragment, useState } from 'react'
+import { TIPS, type Tip } from '../data/tips'
 
-function TipCard({ tip }: { tip: typeof TIPS[number] }) {
-  const [open, setOpen] = useState(false)
+interface DetailPanelProps {
+  tip: Tip
+  onClose: () => void
+}
 
+function DetailPanel({ tip, onClose }: DetailPanelProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full text-left px-4 py-4 flex items-start justify-between hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-start gap-3">
-          <span className="text-2xl font-bold text-indigo-200 leading-none mt-0.5 flex-shrink-0">{tip.num}</span>
-          <div>
-            <h3 className="font-semibold text-gray-800 text-sm leading-snug">{tip.title}</h3>
-            <p className="text-xs text-gray-500 mt-1 leading-snug">{tip.sub}</p>
-          </div>
+    <div className="col-span-2 md:col-span-4 bg-white border border-gray-200 rounded-xl shadow-md p-5 space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold text-indigo-400 tracking-widest">{tip.num}</p>
+          <h3 className="text-base font-bold text-gray-800 mt-0.5">{tip.title}</h3>
+          <p className="text-sm text-gray-500 mt-0.5">{tip.sub}</p>
         </div>
-        <span className="text-gray-300 ml-2 flex-shrink-0 text-sm mt-0.5">{open ? '▲' : '▼'}</span>
-      </button>
+        <button
+          onClick={onClose}
+          className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors text-xl leading-none mt-0.5"
+          aria-label="閉じる"
+        >
+          ✕
+        </button>
+      </div>
 
-      {open && (
-        <div className="px-4 pb-4 border-t border-gray-100 space-y-2 pt-3">
-          <div className="bg-red-50 rounded-lg p-3">
-            <p className="text-xs font-semibold text-red-500 mb-1">Bad ❌</p>
-            <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{tip.bad}</p>
-          </div>
-          <div className="bg-green-50 rounded-lg p-3">
-            <p className="text-xs font-semibold text-green-600 mb-1">Good ✅</p>
-            <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{tip.good}</p>
-          </div>
+      <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+        <p className="text-xs font-semibold text-blue-600 mb-1.5">なぜ重要か？</p>
+        <p className="text-sm text-blue-900 leading-relaxed">{tip.reason}</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="bg-red-50 border border-red-100 rounded-lg p-4">
+          <p className="text-xs font-semibold text-red-500 mb-2">Bad ❌</p>
+          <p className="text-sm text-red-900 font-mono whitespace-pre-wrap leading-relaxed">{tip.bad}</p>
         </div>
-      )}
+        <div className="bg-green-50 border border-green-100 rounded-lg p-4">
+          <p className="text-xs font-semibold text-green-600 mb-2">Good ✅</p>
+          <p className="text-sm text-green-900 font-mono whitespace-pre-wrap leading-relaxed">{tip.good}</p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -40,13 +47,21 @@ function exportMarkdown() {
   const lines = TIPS.flatMap((t) => [
     `## ${t.num}. ${t.title}`,
     '',
-    t.sub,
+    `> ${t.sub}`,
+    '',
+    '### なぜ重要か？',
+    '',
+    t.reason,
     '',
     '**Bad:**',
-    `> ${t.bad}`,
+    '```',
+    t.bad,
+    '```',
     '',
     '**Good:**',
-    `> ${t.good}`,
+    '```',
+    t.good,
+    '```',
     '',
     '---',
     '',
@@ -62,6 +77,10 @@ function exportMarkdown() {
 }
 
 export default function CheatSheet() {
+  const [selected, setSelected] = useState<string | null>(null)
+
+  const toggle = (num: string) => setSelected((prev) => (prev === num ? null : num))
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -73,9 +92,29 @@ export default function CheatSheet() {
           Markdownでエクスポート
         </button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {TIPS.map((tip) => (
-          <TipCard key={tip.num} tip={tip} />
+          <Fragment key={tip.num}>
+            <button
+              onClick={() => toggle(tip.num)}
+              className={`h-28 text-left px-4 py-3 rounded-xl border transition-colors flex flex-col justify-between ${
+                selected === tip.num
+                  ? 'bg-indigo-50 border-indigo-400 shadow-sm'
+                  : 'bg-white border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="text-xl font-bold text-indigo-200 leading-none">{tip.num}</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-800 leading-snug">{tip.title}</p>
+                <p className="text-xs text-gray-400 mt-0.5 leading-snug line-clamp-2">{tip.sub}</p>
+              </div>
+            </button>
+
+            {selected === tip.num && (
+              <DetailPanel tip={tip} onClose={() => setSelected(null)} />
+            )}
+          </Fragment>
         ))}
       </div>
     </div>

@@ -1,4 +1,5 @@
 import type { LogEntry } from '../hooks/usePracticeLog'
+import { TIPS } from '../data/tips'
 
 interface Props {
   logs: LogEntry[]
@@ -16,22 +17,30 @@ function formatDate(iso: string) {
 }
 
 function exportMarkdown(logs: LogEntry[]) {
-  const lines = logs.flatMap((log) => [
-    `## ${log.scenario} — ${formatDate(log.timestamp)}`,
-    '',
-    `**総合評価:** ${log.grade}`,
-    '',
-    '**プロンプト:**',
-    '```',
-    log.prompt,
-    '```',
-    '',
-    '**フィードバック:**',
-    log.feedback,
-    '',
-    '---',
-    '',
-  ])
+  const lines = logs.flatMap((log) => {
+    const checkedTitles = TIPS
+      .filter((t) => log.checkedPrinciples.includes(t.num))
+      .map((t) => `- [x] ${t.num} ${t.title}`)
+    const uncheckedTitles = TIPS
+      .filter((t) => !log.checkedPrinciples.includes(t.num))
+      .map((t) => `- [ ] ${t.num} ${t.title}`)
+
+    return [
+      `## ${log.scenario} — ${formatDate(log.timestamp)}`,
+      '',
+      '**プロンプト:**',
+      '```',
+      log.prompt,
+      '```',
+      '',
+      `**使えた原則（${log.checkedPrinciples.length} / 8）:**`,
+      ...checkedTitles,
+      ...uncheckedTitles,
+      '',
+      '---',
+      '',
+    ]
+  })
 
   const blob = new Blob([lines.join('\n')], { type: 'text/markdown' })
   const url = URL.createObjectURL(blob)
@@ -42,23 +51,13 @@ function exportMarkdown(logs: LogEntry[]) {
   URL.revokeObjectURL(url)
 }
 
-const gradeColor = (grade: string) => {
-  const map: Record<string, string> = {
-    A: 'text-green-600 bg-green-50',
-    B: 'text-blue-600 bg-blue-50',
-    C: 'text-yellow-700 bg-yellow-50',
-    D: 'text-red-600 bg-red-50',
-  }
-  return map[grade] ?? 'text-gray-600 bg-gray-50'
-}
-
 export default function PracticeLog({ logs, onClear }: Props) {
   if (logs.length === 0) {
     return (
       <div className="text-center py-16 text-gray-400">
         <p className="text-4xl mb-3">📭</p>
         <p className="text-sm">まだ練習ログがありません。</p>
-        <p className="text-sm">練習モードでプロンプトを採点してログを保存しましょう。</p>
+        <p className="text-sm">練習モードでプロンプトを書いてセルフチェックしましょう。</p>
       </div>
     )
   }
@@ -75,16 +74,15 @@ export default function PracticeLog({ logs, onClear }: Props) {
             Markdownでエクスポート
           </button>
           <button
-            onClick={() => {
-              if (confirm('全ログを削除しますか？')) onClear()
-            }}
+            onClick={() => { if (confirm('全ログを削除しますか？')) onClear() }}
             className="text-sm border border-red-300 text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
           >
             全削除
           </button>
         </div>
       </div>
-      <div className="space-y-3">
+
+      <div className="space-y-4">
         {logs.map((log) => (
           <div key={log.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <div className="flex items-start justify-between gap-3 mb-3">
@@ -92,17 +90,32 @@ export default function PracticeLog({ logs, onClear }: Props) {
                 <span className="text-xs text-gray-400">{formatDate(log.timestamp)}</span>
                 <p className="font-semibold text-gray-800 text-sm mt-0.5">{log.scenario}</p>
               </div>
-              <span className={`text-xl font-bold w-10 h-10 flex items-center justify-center rounded-lg flex-shrink-0 ${gradeColor(log.grade)}`}>
-                {log.grade}
+              <span className="flex-shrink-0 text-sm font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
+                {log.checkedPrinciples.length} / 8
               </span>
             </div>
+
             <div className="bg-gray-50 rounded-lg p-3 mb-3">
               <p className="text-xs text-gray-400 mb-1">プロンプト</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{log.prompt}</p>
+              <p className="text-sm text-gray-700 font-mono whitespace-pre-wrap leading-relaxed">{log.prompt}</p>
             </div>
-            <div className="bg-indigo-50 rounded-lg p-3">
-              <p className="text-xs text-indigo-400 mb-1">フィードバック</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{log.feedback}</p>
+
+            <div>
+              <p className="text-xs text-gray-400 mb-2">使えた原則</p>
+              <div className="flex flex-wrap gap-1.5">
+                {TIPS.map((tip) => (
+                  <span
+                    key={tip.num}
+                    className={`text-xs px-2 py-1 rounded-md font-medium ${
+                      log.checkedPrinciples.includes(tip.num)
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}
+                  >
+                    {tip.num} {tip.title}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         ))}
