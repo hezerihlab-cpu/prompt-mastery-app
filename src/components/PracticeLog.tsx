@@ -19,14 +19,15 @@ function exportMarkdown(logs: LogEntry[]) {
   const lines = logs.flatMap((log) => [
     `## ${log.scenario} — ${formatDate(log.timestamp)}`,
     '',
-    `**スコア:** ${log.score}点`,
+    `**総合評価:** ${log.grade}`,
     '',
     '**プロンプト:**',
     '```',
     log.prompt,
     '```',
     '',
-    `**フィードバック:** ${log.feedback}`,
+    '**フィードバック:**',
+    log.feedback,
     '',
     '---',
     '',
@@ -41,8 +42,15 @@ function exportMarkdown(logs: LogEntry[]) {
   URL.revokeObjectURL(url)
 }
 
-const scoreColor = (score: number) =>
-  score >= 80 ? 'text-green-600 bg-green-50' : score >= 60 ? 'text-yellow-700 bg-yellow-50' : 'text-red-600 bg-red-50'
+const gradeColor = (grade: string) => {
+  const map: Record<string, string> = {
+    A: 'text-green-600 bg-green-50',
+    B: 'text-blue-600 bg-blue-50',
+    C: 'text-yellow-700 bg-yellow-50',
+    D: 'text-red-600 bg-red-50',
+  }
+  return map[grade] ?? 'text-gray-600 bg-gray-50'
+}
 
 export default function PracticeLog({ logs, onClear }: Props) {
   if (logs.length === 0) {
@@ -84,10 +92,8 @@ export default function PracticeLog({ logs, onClear }: Props) {
                 <span className="text-xs text-gray-400">{formatDate(log.timestamp)}</span>
                 <p className="font-semibold text-gray-800 text-sm mt-0.5">{log.scenario}</p>
               </div>
-              <span
-                className={`text-lg font-bold px-3 py-1 rounded-lg flex-shrink-0 ${scoreColor(log.score)}`}
-              >
-                {log.score}点
+              <span className={`text-xl font-bold w-10 h-10 flex items-center justify-center rounded-lg flex-shrink-0 ${gradeColor(log.grade)}`}>
+                {log.grade}
               </span>
             </div>
             <div className="bg-gray-50 rounded-lg p-3 mb-3">
@@ -96,7 +102,7 @@ export default function PracticeLog({ logs, onClear }: Props) {
             </div>
             <div className="bg-indigo-50 rounded-lg p-3">
               <p className="text-xs text-indigo-400 mb-1">フィードバック</p>
-              <p className="text-sm text-gray-700">{log.feedback}</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{log.feedback}</p>
             </div>
           </div>
         ))}

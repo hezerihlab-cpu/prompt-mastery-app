@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { tips, type Tip } from '../data/tips'
+import { TIPS } from '../data/tips'
 
-function TipCard({ tip }: { tip: Tip }) {
+function TipCard({ tip }: { tip: typeof TIPS[number] }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -10,28 +10,27 @@ function TipCard({ tip }: { tip: Tip }) {
         onClick={() => setOpen((v) => !v)}
         className="w-full text-left px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
-        <div>
-          <h3 className="font-semibold text-gray-800">{tip.principle}</h3>
-          <p className="text-sm text-gray-500 mt-0.5">{tip.summary}</p>
+        <div className="flex items-start gap-3">
+          <span className="text-2xl font-bold text-indigo-200 leading-none mt-0.5">{tip.num}</span>
+          <div>
+            <h3 className="font-semibold text-gray-800">{tip.title}</h3>
+            <p className="text-sm text-gray-500 mt-0.5">{tip.sub}</p>
+          </div>
         </div>
         <span className="text-gray-400 ml-4 flex-shrink-0 text-lg">{open ? '▲' : '▼'}</span>
       </button>
 
       {open && (
-        <div className="px-5 pb-5 border-t border-gray-100 space-y-4 pt-4">
+        <div className="px-5 pb-5 border-t border-gray-100 space-y-3 pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-red-50 rounded-lg p-3">
-              <p className="text-xs font-semibold text-red-500 mb-1">Before ❌</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{tip.before}</p>
+              <p className="text-xs font-semibold text-red-500 mb-1">Bad ❌</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{tip.bad}</p>
             </div>
             <div className="bg-green-50 rounded-lg p-3">
-              <p className="text-xs font-semibold text-green-600 mb-1">After ✅</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{tip.after}</p>
+              <p className="text-xs font-semibold text-green-600 mb-1">Good ✅</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{tip.good}</p>
             </div>
-          </div>
-          <div className="bg-indigo-50 rounded-lg p-3">
-            <p className="text-xs font-semibold text-indigo-600 mb-1">ポイント 💡</p>
-            <p className="text-sm text-gray-700">{tip.point}</p>
           </div>
         </div>
       )}
@@ -40,18 +39,16 @@ function TipCard({ tip }: { tip: Tip }) {
 }
 
 function exportMarkdown() {
-  const lines = tips.flatMap((t) => [
-    `## ${t.principle}`,
+  const lines = TIPS.flatMap((t) => [
+    `## ${t.num}. ${t.title}`,
     '',
-    t.summary,
+    t.sub,
     '',
-    '**Before:**',
-    `> ${t.before}`,
+    '**Bad:**',
+    `> ${t.bad}`,
     '',
-    '**After:**',
-    `> ${t.after}`,
-    '',
-    `**ポイント:** ${t.point}`,
+    '**Good:**',
+    `> ${t.good}`,
     '',
     '---',
     '',
@@ -79,8 +76,8 @@ export default function CheatSheet() {
         </button>
       </div>
       <div className="space-y-3">
-        {tips.map((tip) => (
-          <TipCard key={tip.id} tip={tip} />
+        {TIPS.map((tip) => (
+          <TipCard key={tip.num} tip={tip} />
         ))}
       </div>
     </div>

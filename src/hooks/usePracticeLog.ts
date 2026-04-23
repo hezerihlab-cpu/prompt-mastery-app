@@ -4,7 +4,7 @@ export interface LogEntry {
   id: string
   scenario: string
   prompt: string
-  score: number
+  grade: string
   feedback: string
   timestamp: string
 }

@@ -1,54 +1,28 @@
 import { useState } from 'react'
+import { SCENARIOS } from '../data/tips'
 import { scorePrompt } from '../lib/anthropic'
 import type { LogEntry } from '../hooks/usePracticeLog'
-
-interface Scenario {
-  id: string
-  title: string
-  description: string
-}
-
-const scenarios: Scenario[] = [
-  {
-    id: 'email',
-    title: 'ビジネスメール作成',
-    description: '顧客への謝罪メールを依頼するプロンプトを書いてください',
-  },
-  {
-    id: 'summary',
-    title: '長文の要約',
-    description: '技術記事を初心者向けに要約させるプロンプトを書いてください',
-  },
-  {
-    id: 'code_review',
-    title: 'コードレビュー',
-    description: 'Pythonコードのレビューをさせるプロンプトを書いてください',
-  },
-  {
-    id: 'idea',
-    title: 'アイデア出し',
-    description: '新しいアプリの機能アイデアを10個出させるプロンプトを書いてください',
-  },
-  {
-    id: 'translate',
-    title: '翻訳・ローカライズ',
-    description: '英語のマーケティング文を日本市場向けに翻訳させるプロンプトを書いてください',
-  },
-]
 
 interface Props {
   onSaveLog: (entry: Omit<LogEntry, 'id' | 'timestamp'>) => void
 }
 
+const gradeColor: Record<string, string> = {
+  A: 'text-green-600 bg-green-50',
+  B: 'text-blue-600 bg-blue-50',
+  C: 'text-yellow-700 bg-yellow-50',
+  D: 'text-red-600 bg-red-50',
+}
+
 export default function PracticeMode({ onSaveLog }: Props) {
-  const [selectedId, setSelectedId] = useState(scenarios[0].id)
+  const [selectedId, setSelectedId] = useState(SCENARIOS[0].id)
   const [prompt, setPrompt] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{ score: number; feedback: string } | null>(null)
+  const [result, setResult] = useState<{ grade: string; feedback: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
-  const scenario = scenarios.find((s) => s.id === selectedId)!
+  const scenario = SCENARIOS.find((s) => s.id === selectedId)!
 
   const handleSubmit = async () => {
     if (!prompt.trim()) return
@@ -57,7 +31,7 @@ export default function PracticeMode({ onSaveLog }: Props) {
     setError(null)
     setSaved(false)
     try {
-      const res = await scorePrompt(scenario.description, prompt)
+      const res = await scorePrompt(scenario.label, scenario.desc, prompt)
       setResult(res)
     } catch (e) {
       setError(e instanceof Error ? e.message : '採点中にエラーが発生しました')
@@ -69,55 +43,44 @@ export default function PracticeMode({ onSaveLog }: Props) {
   const handleSave = () => {
     if (!result) return
     onSaveLog({
-      scenario: scenario.title,
+      scenario: scenario.label,
       prompt,
-      score: result.score,
+      grade: result.grade,
       feedback: result.feedback,
     })
     setSaved(true)
   }
 
-  const scoreColor =
-    result === null
-      ? ''
-      : result.score >= 80
-        ? 'text-green-600'
-        : result.score >= 60
-          ? 'text-yellow-600'
-          : 'text-red-600'
-
   return (
     <div className="space-y-5">
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          シナリオを選択
-        </label>
-        <select
-          value={selectedId}
-          onChange={(e) => {
-            setSelectedId(e.target.value)
-            setPrompt('')
-            setResult(null)
-            setError(null)
-            setSaved(false)
-          }}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        >
-          {scenarios.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.title}
-            </option>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">シナリオを選択</label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {SCENARIOS.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => {
+                setSelectedId(s.id)
+                setPrompt('')
+                setResult(null)
+                setError(null)
+                setSaved(false)
+              }}
+              className={`text-left px-3 py-2.5 rounded-lg border text-sm transition-colors ${
+                selectedId === s.id
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-medium'
+                  : 'border-gray-200 hover:border-gray-300 text-gray-600'
+              }`}
+            >
+              <p className="font-medium">{s.label}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{s.desc}</p>
+            </button>
           ))}
-        </select>
-        <p className="mt-3 text-sm text-indigo-700 bg-indigo-50 rounded-lg px-3 py-2">
-          {scenario.description}
-        </p>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          プロンプトを入力
-        </label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">プロンプトを入力</label>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -130,7 +93,7 @@ export default function PracticeMode({ onSaveLog }: Props) {
           disabled={loading || !prompt.trim()}
           className="mt-3 w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? '採点中...' : 'Claude に採点してもらう'}
+          {loading ? '採点中...' : 'AIに採点してもらう'}
         </button>
       </div>
 
@@ -143,17 +106,21 @@ export default function PracticeMode({ onSaveLog }: Props) {
       {result && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
           <div className="flex items-center gap-4">
-            <div className={`text-5xl font-bold ${scoreColor}`}>{result.score}</div>
+            <div
+              className={`text-4xl font-bold w-16 h-16 flex items-center justify-center rounded-xl ${gradeColor[result.grade] ?? 'text-gray-600 bg-gray-50'}`}
+            >
+              {result.grade}
+            </div>
             <div>
-              <p className="text-xs text-gray-400">スコア（100点満点）</p>
+              <p className="text-xs text-gray-400">総合評価</p>
               <p className="text-sm font-medium text-gray-600">
-                {result.score >= 80 ? '素晴らしい！' : result.score >= 60 ? 'もう少し！' : '改善の余地あり'}
+                {result.grade === 'A' ? '素晴らしい！' : result.grade === 'B' ? '良いです' : result.grade === 'C' ? 'もう少し！' : '改善の余地あり'}
               </p>
             </div>
           </div>
           <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-xs font-semibold text-gray-500 mb-1">フィードバック</p>
-            <p className="text-sm text-gray-700 leading-relaxed">{result.feedback}</p>
+            <p className="text-xs font-semibold text-gray-500 mb-2">フィードバック</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{result.feedback}</p>
           </div>
           <button
             onClick={handleSave}
