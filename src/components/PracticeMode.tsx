@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { SCENARIOS } from '../data/tips'
-import { scorePrompt } from '../lib/anthropic'
+import { scorePrompt, IS_MOCK } from '../lib/anthropic'
 import type { LogEntry } from '../hooks/usePracticeLog'
 
 interface Props {
@@ -60,6 +60,12 @@ export default function PracticeMode({ onSaveLog }: Props) {
 
   return (
     <div className="space-y-5">
+      {IS_MOCK && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm flex items-start gap-2">
+          <span className="flex-shrink-0 mt-0.5">⚠️</span>
+          <span><strong>モードモード動作中</strong> — APIキー未設定のため、ダミーの採点を返します。実際のAI採点には <code className="bg-amber-100 px-1 rounded text-xs">.env</code> に <code className="bg-amber-100 px-1 rounded text-xs">VITE_ANTHROPIC_API_KEY</code> を設定してください。</span>
+        </div>
+      )}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
         <p className="text-sm font-semibold text-gray-700 mb-2">シナリオを選択</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
